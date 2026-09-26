@@ -36,6 +36,10 @@ export const strings: LocaleStrings = {
     overtimeProgress: 'מתוך',
     quitLabel: 'יציאה',
     quitConfirm: 'לצאת מהמשחק? ההתקדמות במשחק הזה לא תישמר.',
+    challengeLabel: 'פסילה',
+  },
+  overtimeIntro: {
+    heading: 'כל האותיות נתפסו! מאפסים את הגלגל...',
   },
   playerOut: {
     heading: 'יצא/ה מהסיבוב',

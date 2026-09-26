@@ -39,6 +39,10 @@ export interface LocaleStrings {
     overtimeProgress: string
     quitLabel: string
     quitConfirm: string
+    challengeLabel: string
+  }
+  overtimeIntro: {
+    heading: string
   }
   playerOut: {
     heading: string

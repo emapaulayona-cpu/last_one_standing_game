@@ -11,6 +11,7 @@ interface GameBoardScreenProps {
   state: GameState
   onTapLetter: (letter: string) => void
   onTimerExpired: (deadline: number) => void
+  onChallenge: () => void
   onQuit: () => void
 }
 
@@ -19,6 +20,7 @@ export function GameBoardScreen({
   state,
   onTapLetter,
   onTimerExpired,
+  onChallenge,
   onQuit,
 }: GameBoardScreenProps) {
   const remainingMs = useCountdown(state.deadline, onTimerExpired)
@@ -41,9 +43,17 @@ export function GameBoardScreen({
         {s.currentTurn} {currentPlayer?.name}
       </p>
       {state.overtime && (
-        <p className="font-body text-sm font-semibold text-indigo">
-          {state.lettersGivenThisTurn + 1} {s.overtimeProgress} {state.lettersRequiredThisTurn}
-        </p>
+        <div
+          className="flex gap-2"
+          aria-label={`${state.lettersGivenThisTurn} ${s.overtimeProgress} ${state.lettersRequiredThisTurn}`}
+        >
+          {Array.from({ length: state.lettersRequiredThisTurn }, (_, i) => (
+            <span
+              key={i}
+              className={`size-3 rounded-full ${i < state.lettersGivenThisTurn ? 'bg-gold' : 'bg-indigo-soft'}`}
+            />
+          ))}
+        </div>
       )}
       <Wheel letters={locale.letters} lockedLetters={state.lockedLetters} onTapLetter={onTapLetter}>
         <TimerDial
@@ -51,6 +61,17 @@ export function GameBoardScreen({
           totalSeconds={state.settings.timerSeconds}
         />
       </Wheel>
+      <div className="flex min-h-11 items-center">
+        {state.pendingChallenge && (
+          <button
+            type="button"
+            onClick={onChallenge}
+            className="min-h-11 animate-fade-in-up rounded-2xl border-2 border-danger px-5 py-2 font-body font-semibold text-danger hover:bg-danger/10"
+          >
+            {s.challengeLabel}
+          </button>
+        )}
+      </div>
       <PlayerRoster players={state.players} currentPlayerId={currentPlayer?.id} />
     </ScreenShell>
   )

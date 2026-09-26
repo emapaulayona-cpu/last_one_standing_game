@@ -12,7 +12,10 @@ export function PlayerOutScreen({ locale, playerName, onContinue }: PlayerOutScr
   const s = locale.strings.playerOut
   return (
     <ScreenShell>
-      <p className="font-display text-3xl text-danger">
+      <div className="animate-pulse-ring flex size-24 items-center justify-center rounded-full bg-danger text-cream">
+        <span className="font-display text-4xl">✕</span>
+      </div>
+      <p className="animate-shake font-display text-3xl text-danger">
         {playerName} {s.heading}
       </p>
       <Button onClick={onContinue}>{s.continueButton}</Button>

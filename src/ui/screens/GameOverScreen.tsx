@@ -1,6 +1,7 @@
 import type { LocaleContent } from '../../content/types'
 import type { Player } from '../../engine/types'
 import { Button } from '../components/Button'
+import { Confetti } from '../components/Confetti'
 import { ScreenShell } from '../components/ScreenShell'
 
 interface GameOverScreenProps {
@@ -21,14 +22,19 @@ export function GameOverScreen({
   const s = locale.strings.gameOver
   return (
     <ScreenShell>
-      <p className="font-display text-3xl text-gold">
+      <Confetti pieceCount={48} />
+      <p className="animate-pop font-display text-3xl text-gold">
         {winner.name} {s.heading}
       </p>
       <div className="w-full rounded-2xl bg-surface p-4">
         <p className="mb-2 font-body font-semibold text-indigo">{s.finalStandings}</p>
         <ul className="flex flex-col gap-1 font-body text-ink">
-          {players.map((player) => (
-            <li key={player.id} className="flex justify-between">
+          {players.map((player, index) => (
+            <li
+              key={player.id}
+              style={{ animationDelay: `${index * 80}ms` }}
+              className="flex animate-fade-in-up justify-between"
+            >
               <span>{player.name}</span>
               <span className="font-semibold">{player.cardsWon}</span>
             </li>

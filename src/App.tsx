@@ -8,8 +8,11 @@ import { GameOverScreen } from './ui/screens/GameOverScreen'
 import { HomeScreen } from './ui/screens/HomeScreen'
 import { PlayerOutScreen } from './ui/screens/PlayerOutScreen'
 import { RoundIntroScreen } from './ui/screens/RoundIntroScreen'
+import { OvertimeIntroScreen } from './ui/screens/OvertimeIntroScreen'
 import { RoundWonScreen } from './ui/screens/RoundWonScreen'
 import { SetupScreen } from './ui/screens/SetupScreen'
+
+const OVERTIME_TRANSITION_MS = 900
 
 function deadlineIn(seconds: number): number {
   return now() + seconds * 1000
@@ -27,14 +30,18 @@ function App() {
 
   // Overtime needs a freshly drawn category before play can resume; the reducer signals this by
   // pausing in overtimePending rather than drawing one itself, so it stays free of content data.
+  // The short delay lets the "wheel resets" transition actually be seen, not just flash by.
   useEffect(() => {
     if (state.phase !== 'overtimePending') return
-    const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)!
-    dispatch({
-      type: 'START_OVERTIME',
-      category,
-      deadline: deadlineIn(state.settings.timerSeconds),
-    })
+    const timeout = setTimeout(() => {
+      const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)!
+      dispatch({
+        type: 'START_OVERTIME',
+        category,
+        deadline: deadlineIn(state.settings.timerSeconds),
+      })
+    }, OVERTIME_TRANSITION_MS)
+    return () => clearTimeout(timeout)
   }, [state.phase, state.settings.difficulty, state.settings.timerSeconds, locale.categories])
 
   if (state.phase === 'setup') {
@@ -89,6 +96,9 @@ function App() {
           })
         }
         onTimerExpired={(deadline) => dispatch({ type: 'TIMER_EXPIRED', forDeadline: deadline })}
+        onChallenge={() =>
+          dispatch({ type: 'CHALLENGE', deadline: deadlineIn(state.settings.timerSeconds) })
+        }
         onQuit={() => {
           if (window.confirm(locale.strings.gameBoard.quitConfirm)) {
             dispatch({ type: 'QUIT' })
@@ -151,8 +161,8 @@ function App() {
     )
   }
 
-  // overtimePending is a one-frame transitional phase; the effect above resolves it immediately.
-  return null
+  // overtimePending
+  return <OvertimeIntroScreen locale={locale} />
 }
 
 export default App

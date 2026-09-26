@@ -34,7 +34,7 @@ export function Wheel({ letters, lockedLetters, onTapLetter, disabled, children 
             style={{ left: `${x}%`, top: `${y}%` }}
             className={`absolute flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-xl font-display text-xl shadow-sm transition sm:size-12 ${
               locked
-                ? 'scale-90 bg-indigo-soft text-ink/30 shadow-none'
+                ? 'scale-90 animate-pop bg-indigo-soft text-ink/30 shadow-none'
                 : 'bg-surface text-ink hover:bg-gold-soft active:scale-95 active:shadow-none'
             }`}
           >

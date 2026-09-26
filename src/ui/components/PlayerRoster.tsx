@@ -13,7 +13,7 @@ export function PlayerRoster({ players, currentPlayerId }: PlayerRosterProps) {
         return (
           <span
             key={player.id}
-            className={`rounded-full border px-3 py-1 font-body text-sm font-semibold ${
+            className={`rounded-full border px-3 py-1 font-body text-sm font-semibold transition-colors duration-300 ${
               isCurrent
                 ? 'border-gold bg-gold text-ink'
                 : player.activeThisRound

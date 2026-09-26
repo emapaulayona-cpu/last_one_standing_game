@@ -89,6 +89,12 @@ function App() {
           })
         }
         onTimerExpired={(deadline) => dispatch({ type: 'TIMER_EXPIRED', forDeadline: deadline })}
+        onQuit={() => {
+          if (window.confirm(locale.strings.gameBoard.quitConfirm)) {
+            dispatch({ type: 'QUIT' })
+            setView('home')
+          }
+        }}
       />
     )
   }

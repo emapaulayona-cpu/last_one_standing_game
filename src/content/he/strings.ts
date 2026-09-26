@@ -34,6 +34,8 @@ export const strings: LocaleStrings = {
   gameBoard: {
     currentTurn: 'התור של',
     overtimeProgress: 'מתוך',
+    quitLabel: 'יציאה',
+    quitConfirm: 'לצאת מהמשחק? ההתקדמות במשחק הזה לא תישמר.',
   },
   playerOut: {
     heading: 'יצא/ה מהסיבוב',

@@ -25,8 +25,12 @@ export function validateSetup(
   if (playerNames.length < MIN_PLAYERS) errors.push('TOO_FEW_PLAYERS')
   if (playerNames.length > MAX_PLAYERS) errors.push('TOO_MANY_PLAYERS')
 
-  const trimmedLower = playerNames.map((name) => name.trim().toLowerCase())
-  const hasDuplicate = trimmedLower.some((name, index) => trimmedLower.indexOf(name) !== index)
+  // Blank names are already covered by EMPTY_NAME; don't also flag them as duplicates of
+  // each other just because two blank fields are both "".
+  const nonEmptyLower = playerNames
+    .map((name) => name.trim().toLowerCase())
+    .filter((name) => name.length > 0)
+  const hasDuplicate = nonEmptyLower.some((name, index) => nonEmptyLower.indexOf(name) !== index)
   if (hasDuplicate) errors.push('DUPLICATE_NAME')
 
   if (!TIMER_OPTIONS.includes(settings.timerSeconds)) errors.push('INVALID_TIMER')

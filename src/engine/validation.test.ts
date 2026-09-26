@@ -25,6 +25,12 @@ describe('validateSetup', () => {
     expect(validateSetup(['Alma', '   '], validSettings)).toContain('EMPTY_NAME')
   })
 
+  it('does not flag two blank names as duplicates of each other', () => {
+    const errors = validateSetup(['', ''], validSettings)
+    expect(errors).toContain('EMPTY_NAME')
+    expect(errors).not.toContain('DUPLICATE_NAME')
+  })
+
   it('rejects a timer value outside 5/10/15', () => {
     expect(
       validateSetup(['Alma', 'Noa'], { ...validSettings, timerSeconds: 7 as never }),

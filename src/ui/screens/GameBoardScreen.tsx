@@ -11,6 +11,7 @@ interface GameBoardScreenProps {
   state: GameState
   onTapLetter: (letter: string) => void
   onTimerExpired: (deadline: number) => void
+  onQuit: () => void
 }
 
 export function GameBoardScreen({
@@ -18,6 +19,7 @@ export function GameBoardScreen({
   state,
   onTapLetter,
   onTimerExpired,
+  onQuit,
 }: GameBoardScreenProps) {
   const remainingMs = useCountdown(state.deadline, onTimerExpired)
   const s = locale.strings.gameBoard
@@ -25,6 +27,13 @@ export function GameBoardScreen({
 
   return (
     <ScreenShell>
+      <button
+        type="button"
+        onClick={onQuit}
+        className="absolute start-4 top-4 min-h-11 rounded-xl px-3 font-body text-sm font-semibold text-indigo/60 hover:bg-indigo-soft"
+      >
+        ✕ {s.quitLabel}
+      </button>
       <p className="font-body text-sm font-semibold text-indigo/60">
         {state.currentCategory?.text}
       </p>

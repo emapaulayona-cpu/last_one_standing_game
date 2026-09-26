@@ -37,6 +37,8 @@ export interface LocaleStrings {
   gameBoard: {
     currentTurn: string
     overtimeProgress: string
+    quitLabel: string
+    quitConfirm: string
   }
   playerOut: {
     heading: string

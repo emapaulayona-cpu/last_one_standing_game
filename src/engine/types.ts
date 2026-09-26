@@ -9,7 +9,7 @@ export interface Category {
 }
 
 export type TimerSeconds = 5 | 10 | 15
-export type CardsToWin = 3 | 4 | 5
+export type CardsToWin = 3 | 5 | 10
 
 export interface GameSettings {
   difficulty: Difficulty

@@ -3,7 +3,7 @@ import type { GameSettings, TimerSeconds, CardsToWin } from './types'
 export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 8
 export const TIMER_OPTIONS: TimerSeconds[] = [5, 10, 15]
-export const CARDS_TO_WIN_OPTIONS: CardsToWin[] = [3, 4, 5]
+export const CARDS_TO_WIN_OPTIONS: CardsToWin[] = [3, 5, 10]
 
 export type SetupError =
   | 'TOO_FEW_PLAYERS'

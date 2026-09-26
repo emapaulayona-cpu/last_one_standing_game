@@ -43,9 +43,7 @@ export function GameBoardScreen({
       >
         ✕ {s.quitLabel}
       </button>
-      <p className="font-body text-sm font-semibold text-indigo/60">
-        {state.currentCategory?.text}
-      </p>
+      <p className="font-display text-2xl text-ink">{state.currentCategory?.text}</p>
       <p className="font-display text-2xl text-ink">
         {s.currentTurn} {currentPlayer?.name}
       </p>

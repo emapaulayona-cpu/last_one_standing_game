@@ -42,7 +42,7 @@ export function SoloBoardScreen({
       >
         ✕ {s.quitLabel}
       </button>
-      <p className="font-body text-sm font-semibold text-indigo/60">{state.category.text}</p>
+      <p className="font-display text-2xl text-ink">{state.category.text}</p>
       <p className="font-display text-2xl text-ink">
         {locale.strings.solo.scoreLabel}: {state.score}
       </p>

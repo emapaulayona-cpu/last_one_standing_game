@@ -8,6 +8,7 @@ interface HomeScreenProps {
   onOpenSolo: () => void
   onOpenCategories: () => void
   onOpenScores: () => void
+  onOpenInstructions: () => void
   onOpenSettings: () => void
 }
 
@@ -17,18 +18,29 @@ export function HomeScreen({
   onOpenSolo,
   onOpenCategories,
   onOpenScores,
+  onOpenInstructions,
   onOpenSettings,
 }: HomeScreenProps) {
   return (
     <ScreenShell>
-      <button
-        type="button"
-        onClick={onOpenSettings}
-        aria-label={locale.strings.home.settingsLabel}
-        className="absolute end-4 top-4 flex size-11 items-center justify-center rounded-xl text-2xl text-indigo/60 hover:bg-indigo-soft"
-      >
-        ⚙
-      </button>
+      <div className="absolute end-4 top-4 flex gap-2">
+        <button
+          type="button"
+          onClick={onOpenInstructions}
+          aria-label={locale.strings.home.instructionsLabel}
+          className="flex size-11 items-center justify-center rounded-xl text-2xl text-indigo/60 hover:bg-indigo-soft"
+        >
+          ❓
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          aria-label={locale.strings.home.settingsLabel}
+          className="flex size-11 items-center justify-center rounded-xl text-2xl text-indigo/60 hover:bg-indigo-soft"
+        >
+          ⚙
+        </button>
+      </div>
       <h1 className="font-display text-5xl text-ink">{locale.strings.appTitle}</h1>
       <Button onClick={onNewGame}>{locale.strings.home.newGame}</Button>
       <Button variant="secondary" onClick={onOpenSolo}>

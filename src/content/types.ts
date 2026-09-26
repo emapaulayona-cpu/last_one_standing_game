@@ -10,6 +10,7 @@ export interface LocaleStrings {
     soloLabel: string
     categoriesLabel: string
     scoresLabel: string
+    instructionsLabel: string
     settingsLabel: string
   }
   setup: {
@@ -108,6 +109,12 @@ export interface LocaleStrings {
     finalStandings: string
     rematch: string
     newGame: string
+  }
+  instructions: {
+    title: string
+    intro: string
+    sections: { heading: string; body: string }[]
+    back: string
   }
 }
 

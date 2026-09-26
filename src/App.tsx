@@ -18,6 +18,7 @@ import {
 } from './storage/store'
 import type { PersistedDataV1 } from './storage/types'
 import { CategoriesScreen } from './ui/screens/CategoriesScreen'
+import { InstructionsScreen } from './ui/screens/InstructionsScreen'
 import { GameBoardScreen } from './ui/screens/GameBoardScreen'
 import { GameOverScreen } from './ui/screens/GameOverScreen'
 import { HomeScreen } from './ui/screens/HomeScreen'
@@ -38,7 +39,7 @@ function deadlineIn(seconds: number): number {
   return now() + seconds * 1000
 }
 
-type View = 'home' | 'setup' | 'settings' | 'categories' | 'scores' | 'soloSetup'
+type View = 'home' | 'setup' | 'settings' | 'categories' | 'scores' | 'soloSetup' | 'instructions'
 
 function App() {
   const locale = he
@@ -227,9 +228,13 @@ function App() {
           onOpenSolo={() => setView('soloSetup')}
           onOpenCategories={() => setView('categories')}
           onOpenScores={() => setView('scores')}
+          onOpenInstructions={() => setView('instructions')}
           onOpenSettings={() => setView('settings')}
         />
       )
+    }
+    if (view === 'instructions') {
+      return <InstructionsScreen locale={locale} onBack={() => setView('home')} />
     }
     if (view === 'settings') {
       return (

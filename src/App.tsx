@@ -2,14 +2,18 @@ import { useEffect, useReducer, useState } from 'react'
 import { he } from './content/he'
 import { createInitialState, gameReducer } from './engine/gameEngine'
 import { drawCategory, pickRandomIndex } from './engine/random'
+import type { TimerSeconds } from './engine/types'
+import { playSound, setSoundEnabled, unlockAudio } from './services/audio'
 import { now } from './services/clock'
+import { releaseWakeLock, requestWakeLock } from './services/wakeLock'
 import { GameBoardScreen } from './ui/screens/GameBoardScreen'
 import { GameOverScreen } from './ui/screens/GameOverScreen'
 import { HomeScreen } from './ui/screens/HomeScreen'
+import { OvertimeIntroScreen } from './ui/screens/OvertimeIntroScreen'
 import { PlayerOutScreen } from './ui/screens/PlayerOutScreen'
 import { RoundIntroScreen } from './ui/screens/RoundIntroScreen'
-import { OvertimeIntroScreen } from './ui/screens/OvertimeIntroScreen'
 import { RoundWonScreen } from './ui/screens/RoundWonScreen'
+import { SettingsScreen } from './ui/screens/SettingsScreen'
 import { SetupScreen } from './ui/screens/SetupScreen'
 
 const OVERTIME_TRANSITION_MS = 900
@@ -20,13 +24,37 @@ function deadlineIn(seconds: number): number {
 
 function App() {
   const locale = he
-  const [view, setView] = useState<'home' | 'setup'>('home')
+  const [view, setView] = useState<'home' | 'setup' | 'settings'>('home')
   const [state, dispatch] = useReducer(gameReducer, undefined, createInitialState)
+  const [defaultSoundOn, setDefaultSoundOn] = useState(true)
+  const [defaultTimerSeconds, setDefaultTimerSeconds] = useState<TimerSeconds>(10)
 
   useEffect(() => {
     document.documentElement.lang = locale.code
     document.documentElement.dir = locale.dir
   }, [locale])
+
+  // Muting is instant and global (SPEC §5.5): every sound call already checks this flag, so
+  // keeping it in sync with the active game's setting is all that's needed here.
+  useEffect(() => {
+    setSoundEnabled(state.settings.soundOn)
+  }, [state.settings.soundOn])
+
+  // The screen should stay awake for the whole game, not just the active turn (SPEC §4). Keyed
+  // on the boolean itself (not state.phase) so it doesn't release/reacquire on every turn change.
+  const gameInProgress = state.phase !== 'setup'
+  useEffect(() => {
+    if (gameInProgress) requestWakeLock()
+    return releaseWakeLock
+  }, [gameInProgress])
+
+  useEffect(() => {
+    if (state.phase === 'roundWon') playSound('roundWin')
+  }, [state.phase])
+
+  useEffect(() => {
+    if (state.phase === 'gameOver') playSound('gameWin')
+  }, [state.phase])
 
   // Overtime needs a freshly drawn category before play can resume; the reducer signals this by
   // pausing in overtimePending rather than drawing one itself, so it stays free of content data.
@@ -46,11 +74,31 @@ function App() {
 
   if (state.phase === 'setup') {
     if (view === 'home') {
-      return <HomeScreen locale={locale} onNewGame={() => setView('setup')} />
+      return (
+        <HomeScreen
+          locale={locale}
+          onNewGame={() => setView('setup')}
+          onOpenSettings={() => setView('settings')}
+        />
+      )
+    }
+    if (view === 'settings') {
+      return (
+        <SettingsScreen
+          locale={locale}
+          soundOn={defaultSoundOn}
+          timerSeconds={defaultTimerSeconds}
+          onChangeSoundOn={setDefaultSoundOn}
+          onChangeTimerSeconds={setDefaultTimerSeconds}
+          onBack={() => setView('home')}
+        />
+      )
     }
     return (
       <SetupScreen
         locale={locale}
+        initialSoundOn={defaultSoundOn}
+        initialTimerSeconds={defaultTimerSeconds}
         onStart={(names, settings) => {
           const category = drawCategory(locale.categories, settings.difficulty, Math.random)
           if (!category) return
@@ -76,9 +124,10 @@ function App() {
           const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)
           if (category) dispatch({ type: 'SKIP_CATEGORY', category })
         }}
-        onStartRound={() =>
+        onStartRound={() => {
+          unlockAudio()
           dispatch({ type: 'START_ROUND', deadline: deadlineIn(state.settings.timerSeconds) })
-        }
+        }}
       />
     )
   }
@@ -88,14 +137,18 @@ function App() {
       <GameBoardScreen
         locale={locale}
         state={state}
-        onTapLetter={(letter) =>
+        onTapLetter={(letter) => {
+          playSound('letterTap')
           dispatch({
             type: 'TAP_LETTER',
             letter,
             deadline: deadlineIn(state.settings.timerSeconds),
           })
-        }
-        onTimerExpired={(deadline) => dispatch({ type: 'TIMER_EXPIRED', forDeadline: deadline })}
+        }}
+        onTimerExpired={(deadline) => {
+          playSound('buzzer')
+          dispatch({ type: 'TIMER_EXPIRED', forDeadline: deadline })
+        }}
         onChallenge={() =>
           dispatch({ type: 'CHALLENGE', deadline: deadlineIn(state.settings.timerSeconds) })
         }

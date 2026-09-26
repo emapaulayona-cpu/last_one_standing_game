@@ -7,6 +7,7 @@ export interface LocaleStrings {
   appTitle: string
   home: {
     newGame: string
+    settingsLabel: string
   }
   setup: {
     title: string
@@ -22,11 +23,22 @@ export interface LocaleStrings {
     timerSecondsSuffix: string
     cardsToWinLabel: string
     cardsToWinSuffix: string
+    soundLabel: string
+    soundOn: string
+    soundOff: string
     startGame: string
     errorTooFewPlayers: string
     errorTooManyPlayers: string
     errorEmptyName: string
     errorDuplicateName: string
+  }
+  settings: {
+    title: string
+    soundLabel: string
+    soundOn: string
+    soundOff: string
+    defaultTimerLabel: string
+    back: string
   }
   roundIntro: {
     categoryLabel: string

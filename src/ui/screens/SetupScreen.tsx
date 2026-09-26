@@ -10,48 +10,30 @@ import {
 import type { SetupError } from '../../engine/validation'
 import { Button } from '../components/Button'
 import { ScreenShell } from '../components/ScreenShell'
+import { SegmentedControl } from '../components/SegmentedControl'
 
 interface SetupScreenProps {
   locale: LocaleContent
+  initialSoundOn: boolean
+  initialTimerSeconds: TimerSeconds
   onStart: (names: string[], settings: GameSettings) => void
 }
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'hard', 'mixed']
+type SoundChoice = 'on' | 'off'
+const SOUND_OPTIONS: SoundChoice[] = ['on', 'off']
 
-function SegmentedControl<T extends string | number>({
-  options,
-  value,
-  onChange,
-  labelFor,
-}: {
-  options: T[]
-  value: T
-  onChange: (value: T) => void
-  labelFor: (option: T) => string
-}) {
-  return (
-    <div className="flex justify-center gap-2">
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => onChange(option)}
-          className={`min-h-11 rounded-xl px-4 py-2 font-body font-semibold transition ${
-            option === value ? 'bg-indigo text-cream' : 'bg-surface text-ink hover:bg-indigo-soft'
-          }`}
-        >
-          {labelFor(option)}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-export function SetupScreen({ locale, onStart }: SetupScreenProps) {
+export function SetupScreen({
+  locale,
+  initialSoundOn,
+  initialTimerSeconds,
+  onStart,
+}: SetupScreenProps) {
   const [names, setNames] = useState<string[]>(['', ''])
   const [difficulty, setDifficulty] = useState<Difficulty>('mixed')
-  const [timerSeconds, setTimerSeconds] = useState<TimerSeconds>(10)
+  const [timerSeconds, setTimerSeconds] = useState<TimerSeconds>(initialTimerSeconds)
   const [cardsToWin, setCardsToWin] = useState<CardsToWin>(3)
+  const [soundChoice, setSoundChoice] = useState<SoundChoice>(initialSoundOn ? 'on' : 'off')
   const [errors, setErrors] = useState<SetupError[]>([])
 
   const s = locale.strings.setup
@@ -59,6 +41,10 @@ export function SetupScreen({ locale, onStart }: SetupScreenProps) {
     easy: s.difficultyEasy,
     hard: s.difficultyHard,
     mixed: s.difficultyMixed,
+  }
+  const soundLabel: Record<SoundChoice, string> = {
+    on: s.soundOn,
+    off: s.soundOff,
   }
   const errorLabel: Record<SetupError, string> = {
     TOO_FEW_PLAYERS: s.errorTooFewPlayers,
@@ -90,7 +76,7 @@ export function SetupScreen({ locale, onStart }: SetupScreenProps) {
     }
     onStart(
       names.map((name) => name.trim()),
-      { difficulty, timerSeconds, cardsToWin, soundOn: true },
+      { difficulty, timerSeconds, cardsToWin, soundOn: soundChoice === 'on' },
     )
   }
 
@@ -160,6 +146,16 @@ export function SetupScreen({ locale, onStart }: SetupScreenProps) {
           value={cardsToWin}
           onChange={setCardsToWin}
           labelFor={(option) => `${option} ${s.cardsToWinSuffix}`}
+        />
+      </section>
+
+      <section className="w-full">
+        <h2 className="mb-2 font-body font-semibold text-indigo">{s.soundLabel}</h2>
+        <SegmentedControl
+          options={SOUND_OPTIONS}
+          value={soundChoice}
+          onChange={setSoundChoice}
+          labelFor={(option) => soundLabel[option]}
         />
       </section>
 

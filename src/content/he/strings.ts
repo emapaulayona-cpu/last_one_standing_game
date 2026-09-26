@@ -4,6 +4,7 @@ export const strings: LocaleStrings = {
   appTitle: 'מי נשאר?',
   home: {
     newGame: 'משחק חדש',
+    settingsLabel: 'הגדרות',
   },
   setup: {
     title: 'הגדרת משחק',
@@ -19,11 +20,22 @@ export const strings: LocaleStrings = {
     timerSecondsSuffix: 'שניות',
     cardsToWinLabel: 'קלפים לניצחון',
     cardsToWinSuffix: 'קלפים',
+    soundLabel: 'צליל',
+    soundOn: 'פועל',
+    soundOff: 'כבוי',
     startGame: 'התחלת משחק',
     errorTooFewPlayers: 'צריך לפחות 2 שחקנים',
     errorTooManyPlayers: 'עד 8 שחקנים במשחק',
     errorEmptyName: 'לכל שחקן צריך להיות שם',
     errorDuplicateName: 'לשני שחקנים אין להיות אותו שם',
+  },
+  settings: {
+    title: 'הגדרות',
+    soundLabel: 'צליל',
+    soundOn: 'פועל',
+    soundOff: 'כבוי',
+    defaultTimerLabel: 'זמן ברירת מחדל לתור',
+    back: 'חזרה',
   },
   roundIntro: {
     categoryLabel: 'הקטגוריה',

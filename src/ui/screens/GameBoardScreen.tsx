@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import type { LocaleContent } from '../../content/types'
 import type { GameState } from '../../engine/types'
+import { playSound } from '../../services/audio'
 import { PlayerRoster } from '../components/PlayerRoster'
 import { ScreenShell } from '../components/ScreenShell'
 import { TimerDial } from '../components/TimerDial'
@@ -24,8 +26,13 @@ export function GameBoardScreen({
   onQuit,
 }: GameBoardScreenProps) {
   const remainingMs = useCountdown(state.deadline, onTimerExpired)
+  const secondsLeft = Math.ceil(remainingMs / 1000)
   const s = locale.strings.gameBoard
   const currentPlayer = state.players[state.currentPlayerIndex]
+
+  useEffect(() => {
+    if (secondsLeft > 0) playSound(secondsLeft <= 3 ? 'urgentTick' : 'tick')
+  }, [secondsLeft])
 
   return (
     <ScreenShell>
@@ -56,10 +63,7 @@ export function GameBoardScreen({
         </div>
       )}
       <Wheel letters={locale.letters} lockedLetters={state.lockedLetters} onTapLetter={onTapLetter}>
-        <TimerDial
-          secondsLeft={Math.ceil(remainingMs / 1000)}
-          totalSeconds={state.settings.timerSeconds}
-        />
+        <TimerDial secondsLeft={secondsLeft} totalSeconds={state.settings.timerSeconds} />
       </Wheel>
       <div className="flex min-h-11 items-center">
         {state.pendingChallenge && (

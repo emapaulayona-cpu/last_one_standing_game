@@ -1,1 +1,22 @@
 @import 'tailwindcss';
+
+@theme {
+  --color-cream: #fff6e6;
+  --color-surface: #ffffff;
+  --color-ink: #241f52;
+  --color-indigo: #453ba8;
+  --color-indigo-dark: #332a7f;
+  --color-indigo-soft: #ece6f9;
+  --color-gold: #f5b32b;
+  --color-gold-soft: #ffe7a8;
+  --color-danger: #d1495b;
+
+  --font-display: 'Suez One', serif;
+  --font-body: 'Assistant', sans-serif;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}

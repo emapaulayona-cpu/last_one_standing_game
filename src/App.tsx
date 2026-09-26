@@ -194,8 +194,8 @@ function App() {
         locale={locale}
         savedPlayers={persisted.savedPlayers}
         hasCustomCategories={persisted.customCategories.length > 0}
-        initialSoundOn={persisted.settings.soundOn}
-        initialTimerSeconds={persisted.settings.timerSeconds}
+        soundOn={persisted.settings.soundOn}
+        timerSeconds={persisted.settings.timerSeconds}
         onStart={(names, settings) => {
           const category = drawCategory(
             categoryPoolFor(settings.customOnly),

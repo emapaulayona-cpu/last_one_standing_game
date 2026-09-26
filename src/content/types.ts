@@ -23,13 +23,9 @@ export interface LocaleStrings {
     difficultyHard: string
     difficultyMixed: string
     customOnlyLabel: string
-    timerLabel: string
     timerSecondsSuffix: string
     cardsToWinLabel: string
     cardsToWinSuffix: string
-    soundLabel: string
-    soundOn: string
-    soundOff: string
     startGame: string
     errorTooFewPlayers: string
     errorTooManyPlayers: string

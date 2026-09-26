@@ -1,12 +1,7 @@
 import { useState } from 'react'
 import type { LocaleContent } from '../../content/types'
 import type { CardsToWin, Difficulty, GameSettings, TimerSeconds } from '../../engine/types'
-import {
-  CARDS_TO_WIN_OPTIONS,
-  MAX_PLAYERS,
-  TIMER_OPTIONS,
-  validateSetup,
-} from '../../engine/validation'
+import { CARDS_TO_WIN_OPTIONS, MAX_PLAYERS, validateSetup } from '../../engine/validation'
 import type { SetupError } from '../../engine/validation'
 import type { SavedPlayer } from '../../storage/types'
 import { Button } from '../components/Button'
@@ -17,14 +12,12 @@ interface SetupScreenProps {
   locale: LocaleContent
   savedPlayers: SavedPlayer[]
   hasCustomCategories: boolean
-  initialSoundOn: boolean
-  initialTimerSeconds: TimerSeconds
+  soundOn: boolean
+  timerSeconds: TimerSeconds
   onStart: (names: string[], settings: GameSettings) => void
 }
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'hard', 'mixed']
-type SoundChoice = 'on' | 'off'
-const SOUND_OPTIONS: SoundChoice[] = ['on', 'off']
 type CustomOnlyChoice = 'yes' | 'no'
 const CUSTOM_ONLY_OPTIONS: CustomOnlyChoice[] = ['no', 'yes']
 
@@ -32,16 +25,14 @@ export function SetupScreen({
   locale,
   savedPlayers,
   hasCustomCategories,
-  initialSoundOn,
-  initialTimerSeconds,
+  soundOn,
+  timerSeconds,
   onStart,
 }: SetupScreenProps) {
   const [names, setNames] = useState<string[]>(['', ''])
   const [difficulty, setDifficulty] = useState<Difficulty>('mixed')
   const [customOnlyChoice, setCustomOnlyChoice] = useState<CustomOnlyChoice>('no')
-  const [timerSeconds, setTimerSeconds] = useState<TimerSeconds>(initialTimerSeconds)
   const [cardsToWin, setCardsToWin] = useState<CardsToWin>(3)
-  const [soundChoice, setSoundChoice] = useState<SoundChoice>(initialSoundOn ? 'on' : 'off')
   const [errors, setErrors] = useState<SetupError[]>([])
 
   const s = locale.strings.setup
@@ -50,13 +41,9 @@ export function SetupScreen({
     hard: s.difficultyHard,
     mixed: s.difficultyMixed,
   }
-  const soundLabel: Record<SoundChoice, string> = {
-    on: s.soundOn,
-    off: s.soundOff,
-  }
-  const customOnlyLabel: Record<CustomOnlyChoice, string> = {
-    yes: s.soundOn,
-    no: s.soundOff,
+  const onOffLabel: Record<CustomOnlyChoice, string> = {
+    yes: locale.strings.settings.soundOn,
+    no: locale.strings.settings.soundOff,
   }
   const errorLabel: Record<SetupError, string> = {
     TOO_FEW_PLAYERS: s.errorTooFewPlayers,
@@ -103,7 +90,7 @@ export function SetupScreen({
         difficulty,
         timerSeconds,
         cardsToWin,
-        soundOn: soundChoice === 'on',
+        soundOn,
         customOnly: customOnlyChoice === 'yes',
       },
     )
@@ -182,20 +169,10 @@ export function SetupScreen({
             options={CUSTOM_ONLY_OPTIONS}
             value={customOnlyChoice}
             onChange={setCustomOnlyChoice}
-            labelFor={(option) => customOnlyLabel[option]}
+            labelFor={(option) => onOffLabel[option]}
           />
         </section>
       )}
-
-      <section className="w-full">
-        <h2 className="mb-2 font-body font-semibold text-indigo">{s.timerLabel}</h2>
-        <SegmentedControl
-          options={TIMER_OPTIONS}
-          value={timerSeconds}
-          onChange={setTimerSeconds}
-          labelFor={(option) => `${option} ${s.timerSecondsSuffix}`}
-        />
-      </section>
 
       <section className="w-full">
         <h2 className="mb-2 font-body font-semibold text-indigo">{s.cardsToWinLabel}</h2>
@@ -204,16 +181,6 @@ export function SetupScreen({
           value={cardsToWin}
           onChange={setCardsToWin}
           labelFor={(option) => `${option} ${s.cardsToWinSuffix}`}
-        />
-      </section>
-
-      <section className="w-full">
-        <h2 className="mb-2 font-body font-semibold text-indigo">{s.soundLabel}</h2>
-        <SegmentedControl
-          options={SOUND_OPTIONS}
-          value={soundChoice}
-          onChange={setSoundChoice}
-          labelFor={(option) => soundLabel[option]}
         />
       </section>
 

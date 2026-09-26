@@ -5,6 +5,7 @@ import { ScreenShell } from '../components/ScreenShell'
 interface HomeScreenProps {
   locale: LocaleContent
   onNewGame: () => void
+  onOpenSolo: () => void
   onOpenCategories: () => void
   onOpenScores: () => void
   onOpenSettings: () => void
@@ -13,6 +14,7 @@ interface HomeScreenProps {
 export function HomeScreen({
   locale,
   onNewGame,
+  onOpenSolo,
   onOpenCategories,
   onOpenScores,
   onOpenSettings,
@@ -29,6 +31,9 @@ export function HomeScreen({
       </button>
       <h1 className="font-display text-5xl text-ink">{locale.strings.appTitle}</h1>
       <Button onClick={onNewGame}>{locale.strings.home.newGame}</Button>
+      <Button variant="secondary" onClick={onOpenSolo}>
+        {locale.strings.home.soloLabel}
+      </Button>
       <div className="flex gap-3">
         <Button variant="ghost" onClick={onOpenCategories}>
           {locale.strings.home.categoriesLabel}

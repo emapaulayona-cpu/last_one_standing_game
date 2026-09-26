@@ -1,12 +1,21 @@
 import { useEffect, useReducer, useState } from 'react'
 import { he } from './content/he'
-import { createInitialState, gameReducer } from './engine/gameEngine'
+import { createInitialState, gameReducer, LETTER_COUNT } from './engine/gameEngine'
 import { drawCategory, pickRandomIndex } from './engine/random'
-import type { Category } from './engine/types'
+import { createSoloState, soloReducer } from './engine/soloEngine'
+import type { SoloState } from './engine/soloEngine'
+import type { Category, Difficulty } from './engine/types'
 import { playSound, setSoundEnabled, unlockAudio } from './services/audio'
 import { now } from './services/clock'
 import { releaseWakeLock, requestWakeLock } from './services/wakeLock'
-import { bumpWins, loadData, mergeSavedPlayers, resetData, saveData } from './storage/store'
+import {
+  bumpWins,
+  loadData,
+  mergeSavedPlayers,
+  resetData,
+  saveData,
+  updateSoloRecord,
+} from './storage/store'
 import type { PersistedDataV1 } from './storage/types'
 import { CategoriesScreen } from './ui/screens/CategoriesScreen'
 import { GameBoardScreen } from './ui/screens/GameBoardScreen'
@@ -19,6 +28,9 @@ import { RoundWonScreen } from './ui/screens/RoundWonScreen'
 import { ScoresScreen } from './ui/screens/ScoresScreen'
 import { SettingsScreen } from './ui/screens/SettingsScreen'
 import { SetupScreen } from './ui/screens/SetupScreen'
+import { SoloBoardScreen } from './ui/screens/SoloBoardScreen'
+import { SoloOverScreen } from './ui/screens/SoloOverScreen'
+import { SoloSetupScreen } from './ui/screens/SoloSetupScreen'
 
 const OVERTIME_TRANSITION_MS = 900
 
@@ -26,13 +38,31 @@ function deadlineIn(seconds: number): number {
   return now() + seconds * 1000
 }
 
-type View = 'home' | 'setup' | 'settings' | 'categories' | 'scores'
+type View = 'home' | 'setup' | 'settings' | 'categories' | 'scores' | 'soloSetup'
 
 function App() {
   const locale = he
   const [view, setView] = useState<View>('home')
   const [state, dispatch] = useReducer(gameReducer, undefined, createInitialState)
   const [persisted, setPersisted] = useState<PersistedDataV1>(() => loadData())
+  const [soloState, setSoloState] = useState<SoloState | null>(null)
+  const [soloResult, setSoloResult] = useState<{
+    isNewRecord: boolean
+    previousBest: number
+  } | null>(null)
+  // Tracks the phase as of the last render so a 'active' -> 'over' transition can be detected
+  // exactly once during render (React's own pattern for "adjusting state when a value changes",
+  // https://react.dev/learn/you-might-not-need-an-effect) - robust even if several dispatched
+  // solo actions get applied between two renders, unlike deciding this from a closure value
+  // inside the action handlers themselves.
+  const [lastSoloPhase, setLastSoloPhase] = useState<SoloState['phase'] | undefined>(undefined)
+  if (soloState?.phase !== lastSoloPhase) {
+    if (lastSoloPhase === 'active' && soloState?.phase === 'over') {
+      const previousBest = persisted.soloRecords[soloState.difficulty]
+      setSoloResult({ isNewRecord: soloState.score > previousBest, previousBest })
+    }
+    setLastSoloPhase(soloState?.phase)
+  }
 
   function updatePersisted(updater: (prev: PersistedDataV1) => PersistedDataV1) {
     setPersisted((prev) => {
@@ -48,20 +78,44 @@ function App() {
       : [...locale.categories, ...persisted.customCategories]
   }
 
+  function startSolo(difficulty: Difficulty) {
+    const category = drawCategory(categoryPoolFor(false), difficulty, Math.random)
+    if (!category) return
+    unlockAudio()
+    setSoloResult(null)
+    setSoloState(createSoloState(difficulty, category, deadlineIn(persisted.settings.timerSeconds)))
+  }
+
+  // Reacts to the transition detected above: play the right sound and, once, persist a beaten
+  // record. Runs only when soloResult itself changes, so it fires exactly once per solo game.
+  useEffect(() => {
+    if (!soloResult || !soloState) return
+    playSound(soloResult.isNewRecord ? 'gameWin' : 'buzzer')
+    if (soloResult.isNewRecord) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      updatePersisted((prev) => ({
+        ...prev,
+        soloRecords: updateSoloRecord(prev.soloRecords, soloState.difficulty, soloState.score)
+          .records,
+      }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soloResult])
+
   useEffect(() => {
     document.documentElement.lang = locale.code
     document.documentElement.dir = locale.dir
   }, [locale])
 
   // Muting is instant and global (SPEC §5.5): every sound call already checks this flag, so
-  // keeping it in sync with the active game's setting is all that's needed here.
+  // keeping it in sync with the global default is all that's needed here.
   useEffect(() => {
-    setSoundEnabled(state.settings.soundOn)
-  }, [state.settings.soundOn])
+    setSoundEnabled(persisted.settings.soundOn)
+  }, [persisted.settings.soundOn])
 
   // The screen should stay awake for the whole game, not just the active turn (SPEC §4). Keyed
   // on the boolean itself (not state.phase) so it doesn't release/reacquire on every turn change.
-  const gameInProgress = state.phase !== 'setup'
+  const gameInProgress = state.phase !== 'setup' || soloState !== null
   useEffect(() => {
     if (gameInProgress) requestWakeLock()
     return releaseWakeLock
@@ -115,12 +169,62 @@ function App() {
     state.settings.timerSeconds,
   ])
 
+  if (soloState) {
+    if (soloState.phase === 'active') {
+      return (
+        <SoloBoardScreen
+          locale={locale}
+          state={soloState}
+          timerSeconds={persisted.settings.timerSeconds}
+          onTapLetter={(letter) => {
+            playSound('letterTap')
+            const deadline = deadlineIn(persisted.settings.timerSeconds)
+            setSoloState(
+              (prev) => prev && soloReducer(prev, { type: 'SOLO_TAP_LETTER', letter, deadline }),
+            )
+          }}
+          onTimerExpired={(deadline) =>
+            setSoloState(
+              (prev) =>
+                prev && soloReducer(prev, { type: 'SOLO_TIMER_EXPIRED', forDeadline: deadline }),
+            )
+          }
+          onQuit={() => {
+            if (window.confirm(locale.strings.gameBoard.quitConfirm)) {
+              setSoloState(null)
+              setView('home')
+            }
+          }}
+        />
+      )
+    }
+    return (
+      <SoloOverScreen
+        locale={locale}
+        score={soloState.score}
+        bestScore={soloResult?.isNewRecord ? soloState.score : (soloResult?.previousBest ?? 0)}
+        isNewRecord={soloResult?.isNewRecord ?? false}
+        endedByUsingAllLetters={soloState.lockedLetters.length >= LETTER_COUNT}
+        onPlayAgain={() => startSolo(soloState.difficulty)}
+        onBackHome={() => {
+          setSoloState(null)
+          setView('home')
+        }}
+      />
+    )
+  }
+
+  if (view === 'soloSetup' && state.phase === 'setup') {
+    return <SoloSetupScreen locale={locale} onStart={startSolo} />
+  }
+
   if (state.phase === 'setup') {
     if (view === 'home') {
       return (
         <HomeScreen
           locale={locale}
           onNewGame={() => setView('setup')}
+          onOpenSolo={() => setView('soloSetup')}
           onOpenCategories={() => setView('categories')}
           onOpenScores={() => setView('scores')}
           onOpenSettings={() => setView('settings')}
@@ -185,6 +289,7 @@ function App() {
         <ScoresScreen
           locale={locale}
           savedPlayers={persisted.savedPlayers}
+          soloRecords={persisted.soloRecords}
           onBack={() => setView('home')}
         />
       )

@@ -4,6 +4,7 @@ export const strings: LocaleStrings = {
   appTitle: 'מי נשאר?',
   home: {
     newGame: 'משחק חדש',
+    soloLabel: 'משחק יחיד',
     categoriesLabel: 'קטגוריות',
     scoresLabel: 'ניקוד',
     settingsLabel: 'הגדרות',
@@ -59,7 +60,21 @@ export const strings: LocaleStrings = {
     title: 'ניקוד',
     winsSuffix: 'ניצחונות',
     empty: 'עדיין אין משחקים שהסתיימו',
+    soloRecordsLabel: 'שיאים במשחק יחיד',
     back: 'חזרה',
+  },
+  solo: {
+    title: 'משחק יחיד',
+    scoreLabel: 'ניקוד',
+  },
+  soloOver: {
+    timeUpHeading: 'הזמן נגמר!',
+    allLettersHeading: 'כל האותיות נמצאו!',
+    scoreLabel: 'ניקוד',
+    newRecord: 'שיא חדש!',
+    bestScoreLabel: 'השיא הקודם',
+    playAgain: 'שוב',
+    backHome: 'למסך הבית',
   },
   roundIntro: {
     categoryLabel: 'הקטגוריה',

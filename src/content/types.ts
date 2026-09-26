@@ -7,6 +7,7 @@ export interface LocaleStrings {
   appTitle: string
   home: {
     newGame: string
+    soloLabel: string
     categoriesLabel: string
     scoresLabel: string
     settingsLabel: string
@@ -61,7 +62,21 @@ export interface LocaleStrings {
     title: string
     winsSuffix: string
     empty: string
+    soloRecordsLabel: string
     back: string
+  }
+  solo: {
+    title: string
+    scoreLabel: string
+  }
+  soloOver: {
+    timeUpHeading: string
+    allLettersHeading: string
+    scoreLabel: string
+    newRecord: string
+    bestScoreLabel: string
+    playAgain: string
+    backHome: string
   }
   roundIntro: {
     categoryLabel: string

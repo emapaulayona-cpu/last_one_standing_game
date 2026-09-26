@@ -8,12 +8,15 @@ import {
   validateSetup,
 } from '../../engine/validation'
 import type { SetupError } from '../../engine/validation'
+import type { SavedPlayer } from '../../storage/types'
 import { Button } from '../components/Button'
 import { ScreenShell } from '../components/ScreenShell'
 import { SegmentedControl } from '../components/SegmentedControl'
 
 interface SetupScreenProps {
   locale: LocaleContent
+  savedPlayers: SavedPlayer[]
+  hasCustomCategories: boolean
   initialSoundOn: boolean
   initialTimerSeconds: TimerSeconds
   onStart: (names: string[], settings: GameSettings) => void
@@ -22,15 +25,20 @@ interface SetupScreenProps {
 const DIFFICULTIES: Difficulty[] = ['easy', 'hard', 'mixed']
 type SoundChoice = 'on' | 'off'
 const SOUND_OPTIONS: SoundChoice[] = ['on', 'off']
+type CustomOnlyChoice = 'yes' | 'no'
+const CUSTOM_ONLY_OPTIONS: CustomOnlyChoice[] = ['no', 'yes']
 
 export function SetupScreen({
   locale,
+  savedPlayers,
+  hasCustomCategories,
   initialSoundOn,
   initialTimerSeconds,
   onStart,
 }: SetupScreenProps) {
   const [names, setNames] = useState<string[]>(['', ''])
   const [difficulty, setDifficulty] = useState<Difficulty>('mixed')
+  const [customOnlyChoice, setCustomOnlyChoice] = useState<CustomOnlyChoice>('no')
   const [timerSeconds, setTimerSeconds] = useState<TimerSeconds>(initialTimerSeconds)
   const [cardsToWin, setCardsToWin] = useState<CardsToWin>(3)
   const [soundChoice, setSoundChoice] = useState<SoundChoice>(initialSoundOn ? 'on' : 'off')
@@ -45,6 +53,10 @@ export function SetupScreen({
   const soundLabel: Record<SoundChoice, string> = {
     on: s.soundOn,
     off: s.soundOff,
+  }
+  const customOnlyLabel: Record<CustomOnlyChoice, string> = {
+    yes: s.soundOn,
+    no: s.soundOff,
   }
   const errorLabel: Record<SetupError, string> = {
     TOO_FEW_PLAYERS: s.errorTooFewPlayers,
@@ -68,6 +80,17 @@ export function SetupScreen({
     setNames((prev) => prev.filter((_, i) => i !== index))
   }
 
+  function pickSavedPlayer(name: string) {
+    const alreadyUsed = names.some((n) => n.trim().toLowerCase() === name.toLowerCase())
+    if (alreadyUsed) return
+    setNames((prev) => {
+      const emptyIndex = prev.findIndex((n) => n.trim().length === 0)
+      if (emptyIndex !== -1) return prev.map((n, i) => (i === emptyIndex ? name : n))
+      if (prev.length >= MAX_PLAYERS) return prev
+      return [...prev, name]
+    })
+  }
+
   function handleSubmit() {
     const validationErrors = validateSetup(names, { timerSeconds, cardsToWin })
     if (validationErrors.length > 0) {
@@ -76,7 +99,13 @@ export function SetupScreen({
     }
     onStart(
       names.map((name) => name.trim()),
-      { difficulty, timerSeconds, cardsToWin, soundOn: soundChoice === 'on' },
+      {
+        difficulty,
+        timerSeconds,
+        cardsToWin,
+        soundOn: soundChoice === 'on',
+        customOnly: customOnlyChoice === 'yes',
+      },
     )
   }
 
@@ -117,6 +146,23 @@ export function SetupScreen({
             {s.addPlayer}
           </button>
         )}
+        {savedPlayers.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1 font-body text-sm text-indigo/60">{s.savedPlayersLabel}</p>
+            <div className="flex flex-wrap gap-2">
+              {savedPlayers.map((player) => (
+                <button
+                  key={player.name}
+                  type="button"
+                  onClick={() => pickSavedPlayer(player.name)}
+                  className="min-h-11 rounded-full border border-indigo/20 bg-surface px-3 font-body text-sm text-ink hover:bg-indigo-soft"
+                >
+                  {player.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="w-full">
@@ -128,6 +174,18 @@ export function SetupScreen({
           labelFor={(option) => difficultyLabel[option]}
         />
       </section>
+
+      {hasCustomCategories && (
+        <section className="w-full">
+          <h2 className="mb-2 font-body font-semibold text-indigo">{s.customOnlyLabel}</h2>
+          <SegmentedControl
+            options={CUSTOM_ONLY_OPTIONS}
+            value={customOnlyChoice}
+            onChange={setCustomOnlyChoice}
+            labelFor={(option) => customOnlyLabel[option]}
+          />
+        </section>
+      )}
 
       <section className="w-full">
         <h2 className="mb-2 font-body font-semibold text-indigo">{s.timerLabel}</h2>

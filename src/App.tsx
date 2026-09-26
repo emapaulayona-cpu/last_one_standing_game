@@ -2,10 +2,13 @@ import { useEffect, useReducer, useState } from 'react'
 import { he } from './content/he'
 import { createInitialState, gameReducer } from './engine/gameEngine'
 import { drawCategory, pickRandomIndex } from './engine/random'
-import type { TimerSeconds } from './engine/types'
+import type { Category } from './engine/types'
 import { playSound, setSoundEnabled, unlockAudio } from './services/audio'
 import { now } from './services/clock'
 import { releaseWakeLock, requestWakeLock } from './services/wakeLock'
+import { bumpWins, loadData, mergeSavedPlayers, resetData, saveData } from './storage/store'
+import type { PersistedDataV1 } from './storage/types'
+import { CategoriesScreen } from './ui/screens/CategoriesScreen'
 import { GameBoardScreen } from './ui/screens/GameBoardScreen'
 import { GameOverScreen } from './ui/screens/GameOverScreen'
 import { HomeScreen } from './ui/screens/HomeScreen'
@@ -13,6 +16,7 @@ import { OvertimeIntroScreen } from './ui/screens/OvertimeIntroScreen'
 import { PlayerOutScreen } from './ui/screens/PlayerOutScreen'
 import { RoundIntroScreen } from './ui/screens/RoundIntroScreen'
 import { RoundWonScreen } from './ui/screens/RoundWonScreen'
+import { ScoresScreen } from './ui/screens/ScoresScreen'
 import { SettingsScreen } from './ui/screens/SettingsScreen'
 import { SetupScreen } from './ui/screens/SetupScreen'
 
@@ -22,12 +26,27 @@ function deadlineIn(seconds: number): number {
   return now() + seconds * 1000
 }
 
+type View = 'home' | 'setup' | 'settings' | 'categories' | 'scores'
+
 function App() {
   const locale = he
-  const [view, setView] = useState<'home' | 'setup' | 'settings'>('home')
+  const [view, setView] = useState<View>('home')
   const [state, dispatch] = useReducer(gameReducer, undefined, createInitialState)
-  const [defaultSoundOn, setDefaultSoundOn] = useState(true)
-  const [defaultTimerSeconds, setDefaultTimerSeconds] = useState<TimerSeconds>(10)
+  const [persisted, setPersisted] = useState<PersistedDataV1>(() => loadData())
+
+  function updatePersisted(updater: (prev: PersistedDataV1) => PersistedDataV1) {
+    setPersisted((prev) => {
+      const next = updater(prev)
+      saveData(next)
+      return next
+    })
+  }
+
+  function categoryPoolFor(customOnly: boolean): Category[] {
+    return customOnly
+      ? persisted.customCategories
+      : [...locale.categories, ...persisted.customCategories]
+  }
 
   useEffect(() => {
     document.documentElement.lang = locale.code
@@ -53,7 +72,21 @@ function App() {
   }, [state.phase])
 
   useEffect(() => {
-    if (state.phase === 'gameOver') playSound('gameWin')
+    if (state.phase !== 'gameOver') return
+    playSound('gameWin')
+    const winnerName = state.players.find((player) => player.id === state.gameWinnerId)?.name
+    if (winnerName) {
+      // Recording the win is a side effect syncing the game's outcome to persisted storage,
+      // triggered whenever gameOver is entered (from either TIMER_EXPIRED or CHALLENGE) - there's
+      // no single dispatch call site to do this at instead.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      updatePersisted((prev) => ({
+        ...prev,
+        savedPlayers: bumpWins(prev.savedPlayers, winnerName),
+      }))
+    }
+    // Runs once per game-over entry; re-running on every persisted update would double-count wins.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase])
 
   // Overtime needs a freshly drawn category before play can resume; the reducer signals this by
@@ -62,7 +95,11 @@ function App() {
   useEffect(() => {
     if (state.phase !== 'overtimePending') return
     const timeout = setTimeout(() => {
-      const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)!
+      const category = drawCategory(
+        categoryPoolFor(state.settings.customOnly),
+        state.settings.difficulty,
+        Math.random,
+      )!
       dispatch({
         type: 'START_OVERTIME',
         category,
@@ -70,7 +107,13 @@ function App() {
       })
     }, OVERTIME_TRANSITION_MS)
     return () => clearTimeout(timeout)
-  }, [state.phase, state.settings.difficulty, state.settings.timerSeconds, locale.categories])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    state.phase,
+    state.settings.difficulty,
+    state.settings.customOnly,
+    state.settings.timerSeconds,
+  ])
 
   if (state.phase === 'setup') {
     if (view === 'home') {
@@ -78,6 +121,8 @@ function App() {
         <HomeScreen
           locale={locale}
           onNewGame={() => setView('setup')}
+          onOpenCategories={() => setView('categories')}
+          onOpenScores={() => setView('scores')}
           onOpenSettings={() => setView('settings')}
         />
       )
@@ -86,10 +131,60 @@ function App() {
       return (
         <SettingsScreen
           locale={locale}
-          soundOn={defaultSoundOn}
-          timerSeconds={defaultTimerSeconds}
-          onChangeSoundOn={setDefaultSoundOn}
-          onChangeTimerSeconds={setDefaultTimerSeconds}
+          soundOn={persisted.settings.soundOn}
+          timerSeconds={persisted.settings.timerSeconds}
+          onChangeSoundOn={(soundOn) =>
+            updatePersisted((prev) => ({ ...prev, settings: { ...prev.settings, soundOn } }))
+          }
+          onChangeTimerSeconds={(timerSeconds) =>
+            updatePersisted((prev) => ({ ...prev, settings: { ...prev.settings, timerSeconds } }))
+          }
+          onResetData={() => {
+            if (window.confirm(locale.strings.settings.resetConfirm)) {
+              setPersisted(resetData())
+            }
+          }}
+          onBack={() => setView('home')}
+        />
+      )
+    }
+    if (view === 'categories') {
+      return (
+        <CategoriesScreen
+          locale={locale}
+          customCategories={persisted.customCategories}
+          onAddCustom={(text, level) =>
+            updatePersisted((prev) => ({
+              ...prev,
+              customCategories: [
+                ...prev.customCategories,
+                { id: crypto.randomUUID(), text, level, custom: true },
+              ],
+            }))
+          }
+          onUpdateCustom={(id, text, level) =>
+            updatePersisted((prev) => ({
+              ...prev,
+              customCategories: prev.customCategories.map((category) =>
+                category.id === id ? { ...category, text, level } : category,
+              ),
+            }))
+          }
+          onDeleteCustom={(id) =>
+            updatePersisted((prev) => ({
+              ...prev,
+              customCategories: prev.customCategories.filter((category) => category.id !== id),
+            }))
+          }
+          onBack={() => setView('home')}
+        />
+      )
+    }
+    if (view === 'scores') {
+      return (
+        <ScoresScreen
+          locale={locale}
+          savedPlayers={persisted.savedPlayers}
           onBack={() => setView('home')}
         />
       )
@@ -97,11 +192,21 @@ function App() {
     return (
       <SetupScreen
         locale={locale}
-        initialSoundOn={defaultSoundOn}
-        initialTimerSeconds={defaultTimerSeconds}
+        savedPlayers={persisted.savedPlayers}
+        hasCustomCategories={persisted.customCategories.length > 0}
+        initialSoundOn={persisted.settings.soundOn}
+        initialTimerSeconds={persisted.settings.timerSeconds}
         onStart={(names, settings) => {
-          const category = drawCategory(locale.categories, settings.difficulty, Math.random)
+          const category = drawCategory(
+            categoryPoolFor(settings.customOnly),
+            settings.difficulty,
+            Math.random,
+          )
           if (!category) return
+          updatePersisted((prev) => ({
+            ...prev,
+            savedPlayers: mergeSavedPlayers(prev.savedPlayers, names),
+          }))
           dispatch({
             type: 'CREATE_GAME',
             players: names.map((name) => ({ id: crypto.randomUUID(), name })),
@@ -121,7 +226,11 @@ function App() {
         category={state.currentCategory!}
         startingPlayerName={state.players[state.roundStarterIndex].name}
         onSkipCategory={() => {
-          const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)
+          const category = drawCategory(
+            categoryPoolFor(state.settings.customOnly),
+            state.settings.difficulty,
+            Math.random,
+          )
           if (category) dispatch({ type: 'SKIP_CATEGORY', category })
         }}
         onStartRound={() => {
@@ -182,7 +291,11 @@ function App() {
         locale={locale}
         winner={winner}
         onNextRound={() => {
-          const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)
+          const category = drawCategory(
+            categoryPoolFor(state.settings.customOnly),
+            state.settings.difficulty,
+            Math.random,
+          )
           if (category) dispatch({ type: 'NEXT_ROUND', category })
         }}
       />
@@ -197,7 +310,11 @@ function App() {
         winner={winner}
         players={state.players}
         onRematch={() => {
-          const category = drawCategory(locale.categories, state.settings.difficulty, Math.random)
+          const category = drawCategory(
+            categoryPoolFor(state.settings.customOnly),
+            state.settings.difficulty,
+            Math.random,
+          )
           if (category) {
             dispatch({
               type: 'REMATCH',

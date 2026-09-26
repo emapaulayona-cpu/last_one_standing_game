@@ -7,6 +7,8 @@ export interface LocaleStrings {
   appTitle: string
   home: {
     newGame: string
+    categoriesLabel: string
+    scoresLabel: string
     settingsLabel: string
   }
   setup: {
@@ -15,10 +17,12 @@ export interface LocaleStrings {
     playerPlaceholder: string
     addPlayer: string
     removePlayer: string
+    savedPlayersLabel: string
     difficultyLabel: string
     difficultyEasy: string
     difficultyHard: string
     difficultyMixed: string
+    customOnlyLabel: string
     timerLabel: string
     timerSecondsSuffix: string
     cardsToWinLabel: string
@@ -38,6 +42,29 @@ export interface LocaleStrings {
     soundOn: string
     soundOff: string
     defaultTimerLabel: string
+    resetData: string
+    resetConfirm: string
+    back: string
+  }
+  categories: {
+    title: string
+    builtInLabel: string
+    customLabel: string
+    textPlaceholder: string
+    levelLabel: string
+    addButton: string
+    saveButton: string
+    deleteButton: string
+    emptyCustom: string
+    errorRequired: string
+    errorTooLong: string
+    errorDuplicate: string
+    back: string
+  }
+  scores: {
+    title: string
+    winsSuffix: string
+    empty: string
     back: string
   }
   roundIntro: {

@@ -14,6 +14,7 @@ interface SettingsScreenProps {
   timerSeconds: TimerSeconds
   onChangeSoundOn: (soundOn: boolean) => void
   onChangeTimerSeconds: (seconds: TimerSeconds) => void
+  onResetData: () => void
   onBack: () => void
 }
 
@@ -23,6 +24,7 @@ export function SettingsScreen({
   timerSeconds,
   onChangeSoundOn,
   onChangeTimerSeconds,
+  onResetData,
   onBack,
 }: SettingsScreenProps) {
   const s = locale.strings.settings
@@ -51,6 +53,14 @@ export function SettingsScreen({
           labelFor={(option) => `${option} ${locale.strings.setup.timerSecondsSuffix}`}
         />
       </section>
+
+      <button
+        type="button"
+        onClick={onResetData}
+        className="min-h-11 font-body font-semibold text-danger underline decoration-danger/40 underline-offset-4 hover:text-danger/80"
+      >
+        {s.resetData}
+      </button>
 
       <Button variant="secondary" onClick={onBack}>
         {s.back}

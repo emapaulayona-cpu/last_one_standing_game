@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { validateSetup } from './validation'
+import { validateSetup, validateCategoryText } from './validation'
+import type { Category } from './types'
 
 const validSettings = { timerSeconds: 10 as const, cardsToWin: 3 as const }
 
@@ -37,9 +38,37 @@ describe('validateSetup', () => {
     ).toContain('INVALID_TIMER')
   })
 
-  it('rejects a cards-to-win value outside 3/4/5', () => {
+  it('rejects a cards-to-win value outside 3/5/10', () => {
     expect(validateSetup(['Alma', 'Noa'], { ...validSettings, cardsToWin: 1 as never })).toContain(
       'INVALID_CARDS_TO_WIN',
     )
+  })
+})
+
+const existingCategories: Category[] = [
+  { id: 'c1', text: 'מדינות', level: 'easy' },
+  { id: 'c2', text: 'חיות', level: 'easy', custom: true },
+]
+
+describe('validateCategoryText', () => {
+  it('accepts valid, unique text', () => {
+    expect(validateCategoryText('משהו חדש', existingCategories)).toEqual([])
+  })
+
+  it('rejects empty or blank text', () => {
+    expect(validateCategoryText('   ', existingCategories)).toContain('REQUIRED')
+  })
+
+  it('rejects text over 40 characters', () => {
+    const longText = 'א'.repeat(41)
+    expect(validateCategoryText(longText, existingCategories)).toContain('TOO_LONG')
+  })
+
+  it('rejects a duplicate, trimmed and case-insensitive', () => {
+    expect(validateCategoryText('  מדינות  ', existingCategories)).toContain('DUPLICATE')
+  })
+
+  it('does not flag a category as a duplicate of itself when editing', () => {
+    expect(validateCategoryText('חיות', existingCategories, 'c2')).not.toContain('DUPLICATE')
   })
 })

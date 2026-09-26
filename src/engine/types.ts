@@ -16,6 +16,8 @@ export interface GameSettings {
   timerSeconds: TimerSeconds
   cardsToWin: CardsToWin
   soundOn: boolean
+  /** SPEC §6: restricts every category draw this game to custom categories only. */
+  customOnly: boolean
 }
 
 export interface Player {

@@ -5,6 +5,7 @@ export const DEFAULT_SETTINGS: GameSettings = {
   timerSeconds: 10,
   cardsToWin: 3,
   soundOn: true,
+  customOnly: false,
 }
 
 export const LETTER_COUNT = 22

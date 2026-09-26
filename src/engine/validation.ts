@@ -1,4 +1,4 @@
-import type { GameSettings, TimerSeconds, CardsToWin } from './types'
+import type { Category, GameSettings, TimerSeconds, CardsToWin } from './types'
 
 export const MIN_PLAYERS = 2
 export const MAX_PLAYERS = 8
@@ -35,6 +35,35 @@ export function validateSetup(
 
   if (!TIMER_OPTIONS.includes(settings.timerSeconds)) errors.push('INVALID_TIMER')
   if (!CARDS_TO_WIN_OPTIONS.includes(settings.cardsToWin)) errors.push('INVALID_CARDS_TO_WIN')
+
+  return errors
+}
+
+export const CATEGORY_TEXT_MAX_LENGTH = 40
+
+export type CategoryTextError = 'REQUIRED' | 'TOO_LONG' | 'DUPLICATE'
+
+/**
+ * Validates a category's text against SPEC §6: required, 40 chars max, and no duplicate
+ * (trimmed, case-insensitive) among `existingCategories`. Pass the category's own id as
+ * `excludeId` when validating an edit, so it doesn't flag itself as a duplicate of itself.
+ */
+export function validateCategoryText(
+  text: string,
+  existingCategories: Category[],
+  excludeId?: string,
+): CategoryTextError[] {
+  const errors: CategoryTextError[] = []
+  const trimmed = text.trim()
+
+  if (trimmed.length === 0) errors.push('REQUIRED')
+  if (trimmed.length > CATEGORY_TEXT_MAX_LENGTH) errors.push('TOO_LONG')
+
+  const isDuplicate = existingCategories.some(
+    (category) =>
+      category.id !== excludeId && category.text.trim().toLowerCase() === trimmed.toLowerCase(),
+  )
+  if (isDuplicate) errors.push('DUPLICATE')
 
   return errors
 }

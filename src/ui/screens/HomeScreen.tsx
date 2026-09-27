@@ -37,8 +37,12 @@ export function HomeScreen({
       />
 
       <div className="absolute end-4 top-4 flex gap-2">
-        <IconButton onClick={onOpenInstructions} aria-label={locale.strings.home.instructionsLabel}>
-          ❓
+        <IconButton
+          onClick={onOpenInstructions}
+          aria-label={locale.strings.home.instructionsLabel}
+          className="font-display text-2xl"
+        >
+          ?
         </IconButton>
         <IconButton onClick={onOpenSettings} aria-label={locale.strings.home.settingsLabel}>
           ⚙

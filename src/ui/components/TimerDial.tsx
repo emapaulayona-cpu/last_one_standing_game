@@ -40,13 +40,16 @@ export function TimerDial({ secondsLeft, totalSeconds, onClick, label }: TimerDi
           strokeDashoffset={offset}
         />
       </svg>
-      <div className="relative flex h-full w-full items-center justify-center rounded-full bg-indigo text-cream">
+      {/* The digit stays cream regardless of urgency - only the dial's own background shifts to
+          danger, so the number itself always keeps a high-contrast background under it (a red
+          digit on the indigo dial was nearly unreadable in the last 3 seconds). */}
+      <div
+        className={`relative flex h-full w-full items-center justify-center rounded-full text-cream transition-colors duration-200 ${urgent ? 'bg-danger' : 'bg-indigo'}`}
+      >
         {label ? (
           <span className="font-body text-lg font-semibold">{label}</span>
         ) : (
-          <span className={`font-display text-4xl ${urgent ? 'text-danger' : ''}`}>
-            {secondsLeft}
-          </span>
+          <span className="font-display text-4xl">{secondsLeft}</span>
         )}
       </div>
     </Tag>

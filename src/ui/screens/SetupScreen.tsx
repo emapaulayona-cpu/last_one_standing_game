@@ -12,7 +12,6 @@ interface SetupScreenProps {
   locale: LocaleContent
   savedPlayers: SavedPlayer[]
   hasCustomCategories: boolean
-  soundOn: boolean
   timerSeconds: TimerSeconds
   onStart: (names: string[], settings: GameSettings) => void
 }
@@ -25,7 +24,6 @@ export function SetupScreen({
   locale,
   savedPlayers,
   hasCustomCategories,
-  soundOn,
   timerSeconds,
   onStart,
 }: SetupScreenProps) {
@@ -50,8 +48,8 @@ export function SetupScreen({
     TOO_MANY_PLAYERS: s.errorTooManyPlayers,
     EMPTY_NAME: s.errorEmptyName,
     DUPLICATE_NAME: s.errorDuplicateName,
-    INVALID_TIMER: '',
-    INVALID_CARDS_TO_WIN: '',
+    INVALID_TIMER: s.errorInvalidTimer,
+    INVALID_CARDS_TO_WIN: s.errorInvalidCardsToWin,
   }
 
   function updateName(index: number, value: string) {
@@ -90,7 +88,6 @@ export function SetupScreen({
         difficulty,
         timerSeconds,
         cardsToWin,
-        soundOn,
         customOnly: customOnlyChoice === 'yes',
       },
     )

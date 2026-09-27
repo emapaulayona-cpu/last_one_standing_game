@@ -1,12 +1,11 @@
-import { useEffect } from 'react'
 import type { LocaleContent } from '../../content/types'
 import type { GameState } from '../../engine/types'
-import { playSound } from '../../services/audio'
 import { PlayerRoster } from '../components/PlayerRoster'
 import { ScreenShell } from '../components/ScreenShell'
 import { TimerDial } from '../components/TimerDial'
 import { Wheel } from '../components/Wheel'
 import { useCountdown } from '../hooks/useCountdown'
+import { useTickSound } from '../hooks/useTickSound'
 
 interface GameBoardScreenProps {
   locale: LocaleContent
@@ -29,10 +28,11 @@ export function GameBoardScreen({
   const secondsLeft = Math.ceil(remainingMs / 1000)
   const s = locale.strings.gameBoard
   const currentPlayer = state.players[state.currentPlayerIndex]
+  // "1 of 2" while giving the first answer, "2 of 2" while giving the second - not the raw count
+  // already given, which would read "0 of 2" the entire first attempt.
+  const overtimeAttempt = state.lettersGivenThisTurn + 1
 
-  useEffect(() => {
-    if (secondsLeft > 0) playSound(secondsLeft <= 3 ? 'urgentTick' : 'tick')
-  }, [secondsLeft])
+  useTickSound(remainingMs)
 
   return (
     <ScreenShell>
@@ -48,19 +48,26 @@ export function GameBoardScreen({
         {s.currentTurn} {currentPlayer?.name}
       </p>
       {state.overtime && (
-        <div
-          className="flex gap-2"
-          aria-label={`${state.lettersGivenThisTurn} ${s.overtimeProgress} ${state.lettersRequiredThisTurn}`}
-        >
-          {Array.from({ length: state.lettersRequiredThisTurn }, (_, i) => (
-            <span
-              key={i}
-              className={`size-3 rounded-full ${i < state.lettersGivenThisTurn ? 'bg-gold' : 'bg-indigo-soft'}`}
-            />
-          ))}
+        <div className="flex flex-col items-center gap-2">
+          <p className="font-body text-sm font-semibold text-indigo">
+            {overtimeAttempt} {s.overtimeProgress} {state.lettersRequiredThisTurn}
+          </p>
+          <div className="flex gap-2" aria-hidden>
+            {Array.from({ length: state.lettersRequiredThisTurn }, (_, i) => (
+              <span
+                key={i}
+                className={`size-3 rounded-full ${i < state.lettersGivenThisTurn ? 'bg-gold' : 'bg-indigo-soft'}`}
+              />
+            ))}
+          </div>
         </div>
       )}
-      <Wheel letters={locale.letters} lockedLetters={state.lockedLetters} onTapLetter={onTapLetter}>
+      <Wheel
+        letters={locale.letters}
+        lockedLetters={state.lockedLetters}
+        onTapLetter={onTapLetter}
+        dir={locale.dir}
+      >
         <TimerDial secondsLeft={secondsLeft} totalSeconds={state.settings.timerSeconds} />
       </Wheel>
       <div className="flex min-h-11 items-center">

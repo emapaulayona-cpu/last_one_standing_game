@@ -1,6 +1,7 @@
-import type { Difficulty } from '../engine/types'
+import { TIMER_OPTIONS } from '../engine/validation'
+import type { Difficulty, TimerSeconds } from '../engine/types'
 import { safeGetItem, safeRemoveItem, safeSetItem } from './localStorage'
-import type { PersistedDataV1, SavedPlayer, SoloRecords } from './types'
+import type { PersistedDataV1, PersistedSettings, SavedPlayer, SoloRecords } from './types'
 
 const STORAGE_KEY = 'mi-nishar:data'
 const CURRENT_VERSION = 1
@@ -15,10 +16,42 @@ function defaultData(): PersistedDataV1 {
   }
 }
 
+function isValidTimerSeconds(value: unknown): value is TimerSeconds {
+  return typeof value === 'number' && TIMER_OPTIONS.includes(value as TimerSeconds)
+}
+
+function sanitizeSettings(
+  data: Partial<PersistedSettings> | undefined,
+  fallback: PersistedSettings,
+): PersistedSettings {
+  return {
+    soundOn: typeof data?.soundOn === 'boolean' ? data.soundOn : fallback.soundOn,
+    timerSeconds: isValidTimerSeconds(data?.timerSeconds)
+      ? data.timerSeconds
+      : fallback.timerSeconds,
+  }
+}
+
+function isNonNegativeNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+}
+
+function sanitizeSoloRecords(
+  data: Partial<SoloRecords> | undefined,
+  fallback: SoloRecords,
+): SoloRecords {
+  return {
+    easy: isNonNegativeNumber(data?.easy) ? data.easy : fallback.easy,
+    hard: isNonNegativeNumber(data?.hard) ? data.hard : fallback.hard,
+    mixed: isNonNegativeNumber(data?.mixed) ? data.mixed : fallback.mixed,
+  }
+}
+
 /**
- * Loads saved data, backfilling any field a future version might add (like soloRecords, added
- * after players already had data saved) with its default rather than rejecting the whole thing -
- * a schema version bump would only be needed for a field whose *shape* actually changes.
+ * Loads saved data, backfilling any missing/invalid field with its default rather than rejecting
+ * the whole payload - a schema version bump is only needed for a field whose *shape* actually
+ * changes, and this also protects against a corrupted or hand-edited value (e.g. a timerSeconds
+ * outside 5/10/15) silently flowing into the app instead of being caught here.
  */
 export function loadData(): PersistedDataV1 {
   const raw = safeGetItem(STORAGE_KEY)
@@ -31,10 +64,12 @@ export function loadData(): PersistedDataV1 {
     const data = parsed as Partial<PersistedDataV1>
     return {
       version: CURRENT_VERSION,
-      savedPlayers: data.savedPlayers ?? base.savedPlayers,
-      customCategories: data.customCategories ?? base.customCategories,
-      settings: { ...base.settings, ...data.settings },
-      soloRecords: { ...base.soloRecords, ...data.soloRecords },
+      savedPlayers: Array.isArray(data.savedPlayers) ? data.savedPlayers : base.savedPlayers,
+      customCategories: Array.isArray(data.customCategories)
+        ? data.customCategories
+        : base.customCategories,
+      settings: sanitizeSettings(data.settings, base.settings),
+      soloRecords: sanitizeSoloRecords(data.soloRecords, base.soloRecords),
     }
   } catch {
     return defaultData()

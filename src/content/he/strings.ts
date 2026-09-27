@@ -29,7 +29,11 @@ export const strings: LocaleStrings = {
     errorTooFewPlayers: 'צריך לפחות 2 שחקנים',
     errorTooManyPlayers: 'עד 8 שחקנים במשחק',
     errorEmptyName: 'לכל שחקן צריך להיות שם',
-    errorDuplicateName: 'לשני שחקנים אין להיות אותו שם',
+    errorDuplicateName: 'כבר יש שחקן עם השם הזה',
+    errorInvalidTimer: 'זמן התור לא תקין',
+    errorInvalidCardsToWin: 'מספר הקלפים לניצחון לא תקין',
+    errorNoCategories:
+      'אין קטגוריות מתאימות לבחירה הזו. נסו רמת קושי אחרת או בטלו את "רק הקטגוריות שלי".',
   },
   settings: {
     title: 'הגדרות',
@@ -73,7 +77,7 @@ export const strings: LocaleStrings = {
     allLettersHeading: 'כל האותיות נמצאו!',
     scoreLabel: 'ניקוד',
     newRecord: 'שיא חדש!',
-    bestScoreLabel: 'השיא הקודם',
+    bestScoreLabel: 'השיא שלך',
     playAgain: 'שוב',
     backHome: 'למסך הבית',
   },

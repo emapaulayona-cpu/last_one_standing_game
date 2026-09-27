@@ -23,7 +23,7 @@ export function GameOverScreen({
   return (
     <ScreenShell>
       <Confetti pieceCount={48} />
-      <p className="animate-pop font-display text-3xl text-gold">
+      <p className="animate-pop font-display text-3xl text-ink underline decoration-gold decoration-4 underline-offset-4">
         {winner.name} {s.heading}
       </p>
       <div className="w-full rounded-2xl bg-surface p-4">

@@ -15,7 +15,6 @@ export interface GameSettings {
   difficulty: Difficulty
   timerSeconds: TimerSeconds
   cardsToWin: CardsToWin
-  soundOn: boolean
   /** SPEC §6: restricts every category draw this game to custom categories only. */
   customOnly: boolean
 }
@@ -71,7 +70,7 @@ export type GameAction =
     }
   | { type: 'SKIP_CATEGORY'; category: Category }
   | { type: 'START_ROUND'; deadline: number }
-  | { type: 'TAP_LETTER'; letter: string; deadline: number }
+  | { type: 'TAP_LETTER'; letter: string; deadline: number; now: number }
   | { type: 'TIMER_EXPIRED'; forDeadline: number }
   | { type: 'CHALLENGE'; deadline: number }
   | { type: 'CONTINUE'; deadline: number }

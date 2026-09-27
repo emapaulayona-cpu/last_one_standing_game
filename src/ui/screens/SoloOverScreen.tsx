@@ -33,7 +33,9 @@ export function SoloOverScreen({
       <p className="font-display text-5xl text-indigo">{score}</p>
       <p className="font-body text-ink/60">{s.scoreLabel}</p>
       {isNewRecord ? (
-        <p className="font-display text-2xl text-gold">{s.newRecord}</p>
+        <p className="font-display text-2xl text-ink underline decoration-gold decoration-4 underline-offset-4">
+          {s.newRecord}
+        </p>
       ) : (
         <p className="font-body text-ink/60">
           {s.bestScoreLabel}: {bestScore}

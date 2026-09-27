@@ -157,10 +157,26 @@ export function CategoriesScreen({
 
       <section className="w-full">
         <h2 className="mb-2 font-body font-semibold text-indigo">{s.builtInLabel}</h2>
-        <div className="max-h-48 overflow-y-auto rounded-2xl border border-indigo/10 bg-surface p-3">
-          <p className="font-body text-sm leading-relaxed text-ink/70">
-            {locale.categories.map((category) => category.text).join(' · ')}
-          </p>
+        <div className="flex max-h-64 flex-col gap-3 overflow-y-auto rounded-2xl border border-indigo/10 bg-surface p-3">
+          {LEVELS.map((level) => (
+            <div key={level}>
+              <p className="mb-1.5 font-body text-sm font-semibold text-indigo/70">
+                {levelLabel[level]}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {locale.categories
+                  .filter((category) => category.level === level)
+                  .map((category) => (
+                    <span
+                      key={category.id}
+                      className="rounded-full border border-indigo/10 bg-cream px-2.5 py-1 font-body text-sm text-ink/80"
+                    >
+                      {category.text}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 

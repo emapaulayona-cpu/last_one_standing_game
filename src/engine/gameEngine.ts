@@ -4,7 +4,6 @@ export const DEFAULT_SETTINGS: GameSettings = {
   difficulty: 'mixed',
   timerSeconds: 10,
   cardsToWin: 3,
-  soundOn: true,
   customOnly: false,
 }
 
@@ -70,6 +69,7 @@ function awardCard(
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'CREATE_GAME': {
+      if (action.players.length === 0) return state
       const players: Player[] = action.players.map((player) => ({
         id: player.id,
         name: player.name,
@@ -105,6 +105,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'TAP_LETTER': {
       if (state.phase !== 'turnActive') return state
       if (state.lockedLetters.includes(action.letter)) return state
+      // Guards against a tap that lands after the deadline already passed (e.g. the UI's
+      // countdown was throttled in a backgrounded tab) - without this, the engine would honor a
+      // late tap and let a player who ran out of time escape elimination.
+      if (state.deadline !== null && action.now > state.deadline) return state
 
       const lockedLetters = [...state.lockedLetters, action.letter]
       const lettersGivenThisTurn = state.lettersGivenThisTurn + 1
@@ -238,6 +242,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lettersRequiredThisTurn: 2,
         lettersGivenThisTurn: 0,
         lockedLetters: [],
+        // The wheel reset is a clean break - any still-pending challenge against the last tap on
+        // the old wheel doesn't carry into the new one (confirmed with the project owner).
+        pendingChallenge: null,
         currentCategory: action.category,
         deadline: action.deadline,
       }

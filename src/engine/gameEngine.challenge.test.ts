@@ -44,6 +44,25 @@ describe('CHALLENGE', () => {
     expect(next.players.find((p) => p.id === 'p2')?.cardsWon).toBe(1)
   })
 
+  it('goes straight to gameOver when the challenge-caused round win also reaches the card target', () => {
+    const players = turnActiveState().players.map((p) => {
+      if (p.id === 'p3') return { ...p, activeThisRound: false }
+      if (p.id === 'p2') return { ...p, cardsWon: 2 }
+      return p
+    })
+    const base = turnActiveState({
+      players,
+      currentPlayerIndex: 1,
+      pendingChallenge: { playerId: 'p1', letter: 'א' },
+    })
+    const state = { ...base, settings: { ...base.settings, cardsToWin: 3 as const } }
+    const next = gameReducer(state, { type: 'CHALLENGE', deadline: 9_000 })
+
+    expect(next.phase).toBe('gameOver')
+    expect(next.gameWinnerId).toBe('p2')
+    expect(next.players.find((p) => p.id === 'p2')?.cardsWon).toBe(3)
+  })
+
   it('is a no-op when there is no pending challenge', () => {
     const state = turnActiveState({ pendingChallenge: null })
     const next = gameReducer(state, { type: 'CHALLENGE', deadline: 9_000 })

@@ -7,6 +7,7 @@ import type { SoloState } from './engine/soloEngine'
 import type { Category, Difficulty } from './engine/types'
 import { playSound, setSoundEnabled, unlockAudio } from './services/audio'
 import { now } from './services/clock'
+import { generateId } from './services/id'
 import { releaseWakeLock, requestWakeLock } from './services/wakeLock'
 import {
   bumpWins,
@@ -77,6 +78,15 @@ function App() {
     return customOnly
       ? persisted.customCategories
       : [...locale.categories, ...persisted.customCategories]
+  }
+
+  // The pool can be empty (e.g. "custom only" combined with a difficulty none of the custom
+  // categories use) - every draw goes through here so that case gets a clear message instead of
+  // a button that silently does nothing.
+  function drawCategoryOrWarn(customOnly: boolean, difficulty: Difficulty): Category | null {
+    const category = drawCategory(categoryPoolFor(customOnly), difficulty, Math.random)
+    if (!category) window.alert(locale.strings.setup.errorNoCategories)
+    return category
   }
 
   function startSolo(difficulty: Difficulty) {
@@ -150,11 +160,13 @@ function App() {
   useEffect(() => {
     if (state.phase !== 'overtimePending') return
     const timeout = setTimeout(() => {
-      const category = drawCategory(
-        categoryPoolFor(state.settings.customOnly),
-        state.settings.difficulty,
-        Math.random,
-      )!
+      // The pool can't actually have emptied out mid-game (it's fixed at CREATE_GAME time and
+      // there's no way to edit custom categories while a game is in progress), but falling back
+      // to the current category instead of asserting non-null keeps that assumption from ever
+      // becoming a hard crash if it's ever wrong.
+      const category =
+        drawCategoryOrWarn(state.settings.customOnly, state.settings.difficulty) ??
+        state.currentCategory!
       dispatch({
         type: 'START_OVERTIME',
         category,
@@ -267,7 +279,7 @@ function App() {
               ...prev,
               customCategories: [
                 ...prev.customCategories,
-                { id: crypto.randomUUID(), text, level, custom: true },
+                { id: generateId(), text, level, custom: true },
               ],
             }))
           }
@@ -304,14 +316,9 @@ function App() {
         locale={locale}
         savedPlayers={persisted.savedPlayers}
         hasCustomCategories={persisted.customCategories.length > 0}
-        soundOn={persisted.settings.soundOn}
         timerSeconds={persisted.settings.timerSeconds}
         onStart={(names, settings) => {
-          const category = drawCategory(
-            categoryPoolFor(settings.customOnly),
-            settings.difficulty,
-            Math.random,
-          )
+          const category = drawCategoryOrWarn(settings.customOnly, settings.difficulty)
           if (!category) return
           updatePersisted((prev) => ({
             ...prev,
@@ -319,7 +326,7 @@ function App() {
           }))
           dispatch({
             type: 'CREATE_GAME',
-            players: names.map((name) => ({ id: crypto.randomUUID(), name })),
+            players: names.map((name) => ({ id: generateId(), name })),
             settings,
             category,
             starterIndex: pickRandomIndex(names.length, Math.random),
@@ -336,11 +343,7 @@ function App() {
         category={state.currentCategory!}
         startingPlayerName={state.players[state.roundStarterIndex].name}
         onSkipCategory={() => {
-          const category = drawCategory(
-            categoryPoolFor(state.settings.customOnly),
-            state.settings.difficulty,
-            Math.random,
-          )
+          const category = drawCategoryOrWarn(state.settings.customOnly, state.settings.difficulty)
           if (category) dispatch({ type: 'SKIP_CATEGORY', category })
         }}
         onStartRound={() => {
@@ -362,6 +365,7 @@ function App() {
             type: 'TAP_LETTER',
             letter,
             deadline: deadlineIn(state.settings.timerSeconds),
+            now: now(),
           })
         }}
         onTimerExpired={(deadline) => {
@@ -400,12 +404,9 @@ function App() {
       <RoundWonScreen
         locale={locale}
         winner={winner}
+        players={state.players}
         onNextRound={() => {
-          const category = drawCategory(
-            categoryPoolFor(state.settings.customOnly),
-            state.settings.difficulty,
-            Math.random,
-          )
+          const category = drawCategoryOrWarn(state.settings.customOnly, state.settings.difficulty)
           if (category) dispatch({ type: 'NEXT_ROUND', category })
         }}
       />
@@ -420,11 +421,7 @@ function App() {
         winner={winner}
         players={state.players}
         onRematch={() => {
-          const category = drawCategory(
-            categoryPoolFor(state.settings.customOnly),
-            state.settings.difficulty,
-            Math.random,
-          )
+          const category = drawCategoryOrWarn(state.settings.customOnly, state.settings.difficulty)
           if (category) {
             dispatch({
               type: 'REMATCH',

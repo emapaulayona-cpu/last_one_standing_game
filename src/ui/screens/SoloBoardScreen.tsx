@@ -1,12 +1,11 @@
-import { useEffect } from 'react'
 import type { LocaleContent } from '../../content/types'
 import type { SoloState } from '../../engine/soloEngine'
 import type { TimerSeconds } from '../../engine/types'
-import { playSound } from '../../services/audio'
 import { ScreenShell } from '../components/ScreenShell'
 import { TimerDial } from '../components/TimerDial'
 import { Wheel } from '../components/Wheel'
 import { useCountdown } from '../hooks/useCountdown'
+import { useTickSound } from '../hooks/useTickSound'
 
 interface SoloBoardScreenProps {
   locale: LocaleContent
@@ -29,9 +28,7 @@ export function SoloBoardScreen({
   const secondsLeft = Math.ceil(remainingMs / 1000)
   const s = locale.strings.gameBoard
 
-  useEffect(() => {
-    if (secondsLeft > 0) playSound(secondsLeft <= 3 ? 'urgentTick' : 'tick')
-  }, [secondsLeft])
+  useTickSound(remainingMs)
 
   return (
     <ScreenShell>
@@ -46,7 +43,12 @@ export function SoloBoardScreen({
       <p className="font-display text-2xl text-ink">
         {locale.strings.solo.scoreLabel}: {state.score}
       </p>
-      <Wheel letters={locale.letters} lockedLetters={state.lockedLetters} onTapLetter={onTapLetter}>
+      <Wheel
+        letters={locale.letters}
+        lockedLetters={state.lockedLetters}
+        onTapLetter={onTapLetter}
+        dir={locale.dir}
+      >
         <TimerDial secondsLeft={secondsLeft} totalSeconds={timerSeconds} />
       </Wheel>
     </ScreenShell>

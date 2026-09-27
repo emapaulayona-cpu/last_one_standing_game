@@ -33,6 +33,9 @@ export interface LocaleStrings {
     errorTooManyPlayers: string
     errorEmptyName: string
     errorDuplicateName: string
+    errorInvalidTimer: string
+    errorInvalidCardsToWin: string
+    errorNoCategories: string
   }
   settings: {
     title: string

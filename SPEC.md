@@ -32,9 +32,9 @@ A digital, Hebrew-first word game for phone and iPad, inspired by the classic "n
 ### 2.1 Setup
 - **Players:** 2–8 named players. Names can be picked from saved players or typed in.
 - **Difficulty:** Easy, Hard or Mixed. This controls which categories are drawn.
-- **Turn timer:** 5, 10 or 15 seconds (default 10).
-- **Cards to win:** 3, 4 or 5 (default 3).
-- **Sound:** on or off.
+- **Custom categories only:** an optional toggle, shown once at least one custom category exists, that restricts the draw to custom categories only (still filtered by difficulty).
+- **Cards to win:** 3, 5 or 10 (default 3).
+- Turn timer (5, 10 or 15 seconds, default 10) and sound (on/off) are global preferences set once in Settings (screen 10), not chosen per game.
 
 ### 2.2 The letter wheel
 - The wheel has all **22 Hebrew letters**: א ב ג ד ה ו ז ח ט י כ ל מ נ ס ע פ צ ק ר ש ת.
@@ -80,8 +80,8 @@ A digital, Hebrew-first word game for phone and iPad, inspired by the classic "n
 
 | # | Screen | Key contents |
 |---|---|---|
-| 1 | Home | Title, **New game**, **Solo**, **Categories**, **Scores**, settings icon |
-| 2 | Game setup | Players (add/remove/pick saved), difficulty, timer, cards to win |
+| 1 | Home | Title, **New game**, **Solo**, **Categories**, **Scores**, instructions icon, settings icon |
+| 2 | Game setup | Players (add/remove/pick saved), difficulty, custom-only toggle (when applicable), cards to win |
 | 3 | Round intro | Category card (skip/redraw), starting player, **Start** |
 | 4 | Game board | Letter wheel, center timer, current player, active/out player chips, **Challenge** |
 | 5 | Player out | Short overlay: "X is out", **Continue** |
@@ -90,6 +90,7 @@ A digital, Hebrew-first word game for phone and iPad, inspired by the classic "n
 | 8 | Categories | Browse built-in categories (read-only); add/edit/delete **"הקטגוריות של אלמה"** (custom) |
 | 9 | Scores | Wins per saved player, solo records |
 | 10 | Settings | Sound on/off, default timer, reset saved data |
+| 11 | Instructions | "איך משחקים?" - the game's rules, reachable from Home |
 
 A pause/exit control must be reachable from the game board, with a confirmation before quitting.
 

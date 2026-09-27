@@ -9,7 +9,12 @@ const lastLetter = letters[letters.length - 1]
 describe('overtime', () => {
   it('locking the last letter with players still active moves to overtimePending', () => {
     const state = turnActiveState({ currentPlayerIndex: 0, lockedLetters: allButLast })
-    const next = gameReducer(state, { type: 'TAP_LETTER', letter: lastLetter, deadline: 9_000 })
+    const next = gameReducer(state, {
+      type: 'TAP_LETTER',
+      letter: lastLetter,
+      deadline: 9_000,
+      now: 500,
+    })
 
     expect(next.phase).toBe('overtimePending')
     expect(next.lockedLetters).toHaveLength(letters.length)
@@ -18,11 +23,13 @@ describe('overtime', () => {
     expect(next.pendingChallenge).toEqual({ playerId: 'p1', letter: lastLetter })
   })
 
-  it('START_OVERTIME resets the wheel, doubles the letters required, and draws a new category', () => {
+  it('START_OVERTIME resets the wheel, doubles the letters required, draws a new category, and clears any pending challenge', () => {
     const pending = gameReducer(
       turnActiveState({ currentPlayerIndex: 0, lockedLetters: allButLast }),
-      { type: 'TAP_LETTER', letter: lastLetter, deadline: 9_000 },
+      { type: 'TAP_LETTER', letter: lastLetter, deadline: 9_000, now: 500 },
     )
+    expect(pending.pendingChallenge).not.toBeNull() // sanity check on the fixture
+
     const next = gameReducer(pending, {
       type: 'START_OVERTIME',
       category: otherCategory,
@@ -35,6 +42,8 @@ describe('overtime', () => {
     expect(next.lockedLetters).toEqual([])
     expect(next.currentCategory).toEqual(otherCategory)
     expect(next.deadline).toBe(5_000)
+    // The wheel reset is a clean break - the last tap's challenge window doesn't carry over.
+    expect(next.pendingChallenge).toBeNull()
   })
 
   it('requires two different-letter taps before the turn passes, without resetting the timer between them', () => {
@@ -51,6 +60,7 @@ describe('overtime', () => {
       type: 'TAP_LETTER',
       letter: 'א',
       deadline: 9_999,
+      now: 500,
     })
     expect(afterFirst.currentPlayerIndex).toBe(1)
     expect(afterFirst.lettersGivenThisTurn).toBe(1)
@@ -60,6 +70,7 @@ describe('overtime', () => {
       type: 'TAP_LETTER',
       letter: 'ב',
       deadline: 9_999,
+      now: 501,
     })
     expect(afterSecond.currentPlayerIndex).toBe(2)
     expect(afterSecond.lettersGivenThisTurn).toBe(0)
@@ -80,6 +91,7 @@ describe('overtime', () => {
       type: 'TAP_LETTER',
       letter: lastLetter,
       deadline: 9_999,
+      now: 500,
     })
 
     expect(next.phase).toBe('overtimePending')
@@ -97,6 +109,7 @@ describe('overtime', () => {
       type: 'TAP_LETTER',
       letter: lastLetter,
       deadline: 9_000,
+      now: 500,
     })
     const next = gameReducer(pending, {
       type: 'START_OVERTIME',
@@ -104,6 +117,36 @@ describe('overtime', () => {
       deadline: 5_000,
     })
 
+    expect(next.lettersRequiredThisTurn).toBe(2)
+  })
+
+  it("TIMER_EXPIRED during overtime resets the current turn's letter progress for the next player", () => {
+    const overtimeState = turnActiveState({
+      currentPlayerIndex: 0,
+      overtime: true,
+      lettersRequiredThisTurn: 2,
+      lettersGivenThisTurn: 1,
+      deadline: 1_000,
+    })
+    const next = gameReducer(overtimeState, { type: 'TIMER_EXPIRED', forDeadline: 1_000 })
+
+    expect(next.phase).toBe('playerOut')
+    expect(next.lettersGivenThisTurn).toBe(0)
+  })
+
+  it("a successful CHALLENGE during overtime resets only the timer, not the current player's letter progress", () => {
+    const overtimeState = turnActiveState({
+      currentPlayerIndex: 1,
+      overtime: true,
+      lettersRequiredThisTurn: 2,
+      lettersGivenThisTurn: 1,
+      pendingChallenge: { playerId: 'p1', letter: 'א' },
+      deadline: 1_000,
+    })
+    const next = gameReducer(overtimeState, { type: 'CHALLENGE', deadline: 9_000 })
+
+    expect(next.deadline).toBe(9_000)
+    expect(next.lettersGivenThisTurn).toBe(1)
     expect(next.lettersRequiredThisTurn).toBe(2)
   })
 })
